@@ -103,7 +103,6 @@ compare = st.multiselect("比較したい都市を選択してください(複�
 
 #グラフ2
 if compare:
-    st.subheader(f"全期間の価格推移({min_year}年~{max_year}年)")
     fig2 = px.line(df_all,
                 x="month_str",
                 y=compare,
