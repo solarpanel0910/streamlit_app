@@ -93,6 +93,10 @@ st.info(f"""
         下のグラフでほかの都市と比較してみましょう。
         """)
 
+st.markdown("---")
+
+st.subheader(f"全期間の価格推移比較({min_year}年~{max_year}年)")
+
 compare = st.multiselect("比較したい都市を選択してください(複数可)",
                             df.columns[4::],
                             default=['札幌市', '那覇市'])
@@ -107,16 +111,10 @@ if compare:
                 labels={"month_str":"年月",city: "価格(円)", "variable":"都市名"})
     st.plotly_chart(fig2)
 else:
-    st.warning("サイドバーで比較したい都市を1つ以上選んでください。")
-
-##分析・解釈コメント(②未使用UI:info)
-st.subheader("傾向の分析")
-st.info(f"""
-        このグラフから、{city}におけるガソリン価格の変動を確認できます。\n特に{year}年の最高値は{max_price}でした。
-        """)
+    st.warning("比較したい都市を1つ以上選んでください。")
 
 # expander (③未使用UI:expander)
-with st.expander("詳細なデータを見る(元データ)"):
+with st.expander("生データを見る"):
     st.write("出典: e-Stat 小売物価統計調査")
     st.dataframe(df)
 
