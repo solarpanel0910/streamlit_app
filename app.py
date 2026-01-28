@@ -82,6 +82,17 @@ with right_container:
     fig1.update_yaxes(range=[y_min, y_max])
     st.plotly_chart(fig1) 
 
+min_price = df_year[city].min()
+max_price = df_year[city].max()
+
+#未使用UI2(info)
+st.info(f"""
+        傾向の分析\n
+        このグラフから、{city}におけるガソリン価格の変動を確認できます。
+        {year}年の最高値は{max_price}円、最低値は{min_price}円でした。
+        下のグラフでほかの都市と比較してみましょう。
+        """)
+
 compare = st.multiselect("比較したい都市を選択してください(複数可)",
                             df.columns[4::],
                             default=['札幌市', '那覇市'])
