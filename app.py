@@ -4,54 +4,87 @@ import plotly.express as px
 
 #ページ冒頭
 st.title('ガソリンの値段推移')
+st.markdown("---")
 st.markdown("### このアプリについて\n e-Statのデータを用いて、日本の各都市におけるガソリン価格の推移を可視化したものです。")
+st.markdown("---")
+st.subheader("都市別年間ガソリン価格の推移")
 
 #データ読み込みと前処理
 df = pd.read_csv('gas.csv')
 
-#2025年12月 → 2025-12 (AIからのアドバイス)
+#使用した表に欠測が存在するため errors="coerce"を用いてNaNに変換する
+for col_name in df.columns[4:]:
+    df[col_name] = pd.to_numeric(df[col_name], errors="coerce")
+
+#データ処理用の年月情報(period型に変換)
 df["month"] = pd.to_datetime(df["時間軸（月）"], format="%Y年%m月").dt.to_period("M")
 
-col = st.columns(3)
+#表示用(astypeでstr型に変換)
+df["month_str"] = df["month"].astype(str)
+
+cols=st.columns([1, 3])
+top_left_container = cols[0].container(border=True)
+bottom_left_container=cols[0].container(border=True)
+
 #都市の選択
-with st.sidebar:
+with top_left_container:
     city = st.selectbox('都市を選択してください',
                               df.columns[4::])
-    compare = st.multiselect("比較したい都市を選択してください(複数可)",
-                             df.columns[4::],
-                             default=['札幌市', '那覇市'])
-#年の選択(スライダー)
-min_year = int(df["month"].dt.year.min())
-max_year = int(df["month"].dt.year.max())
-year = col[0].slider(label='年を選択してください',
+    
+    min_year = int(df["month"].dt.year.min())
+    max_year = int(df["month"].dt.year.max())
+
+    year = st.slider(label='年を選択してください',
                       min_value=min_year,
                       max_value=max_year,
                       value=df["month"].dt.year.min())
 
 
-#年データの整形
+#ブールインデックスを用いて選択した年のデータだけを df_yearに格納
+#.copy()で元データを破壊せずに中身をいじれる
 df_year = df[df["month"].dt.year == year].copy()
-df_year["month_str"] = df_year["month"].astype(str)
-df_year[city] = pd.to_numeric(df_year[city], errors="coerce")
-
-#全期間データ
 df_all = df.copy()
-df_all["month_str"] = df_all["month"].astype(str)
-df_all[city] = pd.to_numeric(df_all[city], errors="coerce")
+current_price = df_year[city].mean()
 
-#前年差(①未使用UI:metric)
-avg_price = df_year[city].mean()
-max_price = df_year[city].max()
-divide = max_price - avg_price
-col[2].metric(label=f"{year}年の最高価格", value=f"{max_price:.1f}円", delta=f"+{divide:.1f}円")
+#前年のデータを取得して平均価格を計算
+pre_year = year - 1
+df_pre = df[df["month"].dt.year == pre_year]
 
+#前年のデータが存在すれば選択年との差額および割合を計算
+with bottom_left_container:
+    if not df_pre.empty:
+        pre_price = df_pre[city].mean()
+
+        diff_price = current_price - pre_price
+        ratio = (diff_price / pre_price) * 100
+
+        #未使用UI1(metric)
+        st.metric(label=f"{city}の{year}年 平均価格",
+                  value=f"{current_price:.1f}円",
+                  delta=f"{diff_price:+.1f}円({ratio:+.1f}%)",)
+    else:
+        st.metric(label=f"{city}の{year}年 平均価格",
+                  value=f"{current_price:.1f}",
+                  delta=None)
+
+y_min = df_year[city].min() - 5
+y_max = df_year[city].max()
+
+right_container = cols[1].container(border=True)
+       
 #グラフ1
-fig1 = px.bar(df_year,
-             x="month_str",
-             y=city,
-             title=f"{city}の{year}年 月別ガソリン価格",
-             labels={"month_str": "年月", city: "価格(円)"})
-st.plotly_chart(fig1) 
+with right_container:
+    fig1 = px.bar(df_year,
+                x="month_str",
+                y=city,
+                title=f"{city}の{year}年 月別ガソリン価格",
+                labels={"month_str": "年月", city: "価格(円)"})
+    fig1.update_yaxes(range=[y_min, y_max])
+    st.plotly_chart(fig1) 
+
+compare = st.multiselect("比較したい都市を選択してください(複数可)",
+                            df.columns[4::],
+                            default=['札幌市', '那覇市'])
 
 #グラフ2
 if compare:
