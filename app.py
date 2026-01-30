@@ -80,7 +80,7 @@ with right_container:
                 title=f"{city}の{year}年 月別ガソリン価格",
                 labels={"month_str": "年月", city: "価格(円)"})
     fig1.update_yaxes(range=[y_min, y_max])
-    st.plotly_chart(fig1) 
+    st.plotly_chart(fig1, use_container_width=True) # グラフの幅を動的に変える
 
 min_price = df_year[city].min()
 max_price = df_year[city].max()
@@ -108,7 +108,7 @@ if compare:
                 y=compare,
                 title="選択した都市のガソリン価格推移比較",
                 labels={"month_str":"年月",city: "価格(円)", "variable":"都市名"})
-    st.plotly_chart(fig2)
+    st.plotly_chart(fig2, use_container_width=True) #グラフの幅を動的に変える
 else:
     st.warning("比較したい都市を1つ以上選んでください。")
 
